@@ -20,6 +20,24 @@
             background-color: #374151;
             color: white;
         }
+        #toast {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #333;
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 9999px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+            pointer-events: none;
+            z-index: 50;
+        }
+        #toast.show {
+            opacity: 1;
+        }
     </style>
 </head>
 <body class="bg-gray-100 text-gray-900 font-sans min-h-screen flex flex-col">
@@ -124,10 +142,6 @@
                                 <input type="tel" id="phone" required class="w-full px-4 py-2 border rounded-lg" />
                             </div>
                             <div>
-                                <label for="whatsapp" class="block text-sm font-medium text-gray-700">WhatsApp</label>
-                                <input type="tel" id="whatsapp" required class="w-full px-4 py-2 border rounded-lg" />
-                            </div>
-                            <div>
                                 <label for="openingHours" class="block text-sm font-medium text-gray-700">სამუშაო საათები</label>
                                 <input type="text" id="openingHours" required class="w-full px-4 py-2 border rounded-lg" />
                             </div>
@@ -161,6 +175,8 @@
             </main>
         </div>
     </div>
+    
+    <div id="toast" class="toast"></div>
 
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
@@ -215,6 +231,7 @@ const firebaseConfig = {
             const bookingOptionsContainer = document.getElementById("bookingOptionsContainer");
             const addOptionBtn = document.getElementById("addOptionBtn");
             const removeOptionBtn = document.getElementById("removeOptionBtn");
+            const toast = document.getElementById("toast");
 
             let currentPlaces = {};
             let currentBookings = {};
@@ -232,6 +249,14 @@ const firebaseConfig = {
 
             function getGeorgianErrorMessage(errorCode) {
                 return georgianErrorMap[errorCode] || georgianErrorMap['default'];
+            }
+
+            function showToast(message) {
+                toast.textContent = message;
+                toast.classList.add('show');
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                }, 3000);
             }
 
             function switchTab(tabName) {
@@ -466,7 +491,6 @@ const firebaseConfig = {
                         lng: parseFloat(document.getElementById("coordsLng").value),
                     },
                     phone: document.getElementById("phone").value,
-                    whatsapp: document.getElementById("whatsapp").value,
                     openingHours: document.getElementById("openingHours").value,
                     bookingOptions: bookingOptions
                 };
@@ -474,17 +498,17 @@ const firebaseConfig = {
                 try {
                     if (placeId) {
                         await placesRef.child(placeId).set(newPlace);
-                        alert("ადგილი წარმატებით განახლდა!");
+                        showToast("ადგილი წარმატებით განახლდა!");
                     } else {
                         const newPlaceRef = placesRef.push();
                         newPlace.id = newPlaceRef.key;
                         await newPlaceRef.set(newPlace);
-                        alert("ადგილი წარმატებით დაემატა!");
+                        showToast("ადგილი წარმატებით დაემატა!");
                     }
                     resetPlaceForm();
                 } catch (error) {
                     console.error("ადგილის შენახვის შეცდომა:", error);
-                    alert("ადგილის შენახვის შეცდომა. დეტალებისთვის შეამოწმეთ კონსოლი.");
+                    showToast("ადგილის შენახვის შეცდომა. დეტალებისთვის შეამოწმეთ კონსოლი.");
                 }
             });
 
@@ -508,7 +532,6 @@ const firebaseConfig = {
                     document.getElementById("coordsLat").value = place.coords.lat;
                     document.getElementById("coordsLng").value = place.coords.lng;
                     document.getElementById("phone").value = place.phone;
-                    document.getElementById("whatsapp").value = place.whatsapp;
                     document.getElementById("openingHours").value = place.openingHours;
                     
                     bookingOptionsContainer.innerHTML = '';
@@ -523,12 +546,12 @@ const firebaseConfig = {
                     formTitle.textContent = "ადგილის რედაქტირება";
                     document.querySelector('button[type="submit"]').textContent = "ადგილის განახლება";
                 } else if (target.classList.contains("delete-btn")) {
-                    if (confirm(`დარწმუნებული ხართ, რომ გსურთ ${place.name}-ის წაშლა?`)) {
+                    if (window.confirm(`დარწმუნებული ხართ, რომ გსურთ ${place.name}-ის წაშლა?`)) {
                         placesRef.child(id).remove().then(() => {
-                            alert("ადგილი წარმატებით წაიშალა!");
+                            showToast("ადგილი წარმატებით წაიშალა!");
                         }).catch(error => {
                             console.error("ადგილის წაშლის შეცდომა:", error);
-                            alert("ადგილის წაშლის შეცდომა.");
+                            showToast("ადგილის წაშლის შეცდომა.");
                         });
                     }
                 }
@@ -544,10 +567,10 @@ const firebaseConfig = {
                     if (newStatus === 'confirmed') {
                         await analyticsRef.child('totalBookings').transaction(currentValue => (currentValue || 0) + 1);
                     }
-                    alert(`ჯავშნის სტატუსი შეიცვალა ${newStatus}-ზე.`);
+                    showToast(`ჯავშნის სტატუსი შეიცვალა ${newStatus}-ზე.`);
                 } catch (error) {
                     console.error("ჯავშნის სტატუსის განახლების შეცდომა:", error);
-                    alert("ჯავშნის სტატუსის განახლების შეცდომა.");
+                    showToast("ჯავშნის სტატუსის განახლების შეცდომა.");
                 }
             });
             
