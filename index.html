@@ -65,6 +65,24 @@
             66%  {transform: scale(var(--s,1)) translate(calc(400%/3),130%)}
             100% {transform: scale(var(--s,1)) translate(calc(400%/3),0)}
         }
+        #toast {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #333;
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 9999px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+            pointer-events: none;
+            z-index: 50;
+        }
+        #toast.show {
+            opacity: 1;
+        }
     </style>
 </head>
 <body  class="bg-gray-100 text-gray-900 font-sans min-h-screen flex flex-col">
@@ -96,7 +114,7 @@
             <div style="backdrop-filter: blur(3px);
   -webkit-backdrop-filter: blur(3px); width: 90%; border-radius: 1000px;border: 2px solid black;margin-top: 10px; position: fixed;" class="sticky top-0 z-30 flex justify-between items-center px-4 py-2">
             <h1 style="display: flex; align-items: center; gap: 10px;" class="text-2xl font-bold select-none text-gray-800">
-                <div style="width: 40px; height: 40px; background-image: url('https://i.postimg.cc/y6SYc4xr/Picsart-25-09-03-18-22-36-781.jpg'); background-size: cover; background-position: center; border-radius: 10px;"></div><vibespot>vibr</vibespot>
+                <div style="width: 40px; height: 40px; background-image: url('https://i.postimg.cc/y6SYc4xr/Picsart-25-09-03-18-22-36-781.jpg'); background-size: cover; background-position: center; border-radius: 10px;"></div><vibespot>vibra</vibespot>
             </h1>
             <button id="logoutBtn" class="absolute right-4 text-sm text-gray-600 hover:underline">გასვლა</button>
             </div>
@@ -117,45 +135,33 @@
                 </div>
                 <div id="exploreCards" class="space-y-4"></div>
             </section>
+            
             <section id="contactView" class="hidden p-4">
-                <div class="bg-white rounded-2xl shadow-md p-6">
-                    <h3 class="text-xl font-bold mb-4">ჩვენი საკონტაქტო ინფორმაცია</h3>
-                    <div class="space-y-4">
-                        <a href="tel:+995598893999" class="flex items-center gap-4 text-gray-800 hover:text-gray-900 transition">
-                            <i class="fas fa-phone-alt text-xl text-gray-600"></i>
-                            <span class="font-medium">+995 598 893 999</span>
-                        </a>
-                        <a href="https://wa.me/995598893999" target="_blank" class="flex items-center gap-4 text-gray-800 hover:text-gray-900 transition">
-                            <i class="fab fa-whatsapp text-xl text-green-500"></i>
-                            <span class="font-medium">WhatsApp</span>
-                        </a>
-                        <a href="https://www.instagram.com/gio.nadashvili?igsh=dXEyaTg1OG91cjJl" target="_blank" class="flex items-center gap-4 text-gray-800 hover:text-gray-900 transition">
-                            <i class="fab fa-instagram text-xl text-pink-500"></i>
-                            <span class="font-medium">Instagram</span>
-                        </a>
-                        <a href="https://www.tiktok.com/@giorgi_l.l.l?_t=ZS-8zQINbQcfei&_r=1" target="_blank" class="flex items-center gap-4 text-gray-800 hover:text-gray-900 transition">
-                            <i class="fab fa-tiktok text-xl text-gray-900"></i>
-                            <span class="font-medium">TikTok</span>
-                        </a>
+                <div class="bg-white rounded-2xl shadow-md p-6 max-w-md mx-auto">
+                    <h2 class="text-2xl font-bold text-center mb-6 text-gray-900">დაგვიკავშირდით</h2>
+                    <div class="space-y-6">
+                        <div class="text-center">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-2">საკონტაქტო ინფორმაცია</h3>
+                            <a href="tel:+995598893999" class="flex items-center justify-center gap-4 py-3 px-4 rounded-xl text-gray-800 bg-gray-100 hover:bg-gray-200 transition">
+                                <i class="fas fa-phone-alt text-xl text-gray-600"></i>
+                                <span class="font-medium">+995 598 893 999</span>
+                            </a>
+                        </div>
+                        <div class="text-center">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-2">მოგვძებნეთ სოციალურ ქსელებში</h3>
+                            <div class=" items-center justify-center gap-4">
+                                                 <div class="flex items-center justify-center w-full py-3 px-4 rounded-xl text-white bg-gray-900 hover:bg-gray-700 transition">
+                                       <i class="fab fa-instagram text-xl"></i>
+                                    <span class="font-medium ml-2">@gio.nadashvili</span>
+                                                 </div>   <br>   <div class="flex items-center justify-center w-full py-3 px-4 rounded-xl text-white bg-gray-900 hover:bg-gray-700 transition">
+                            
+                        
+                               <i class="fab fa-tiktok text-xl"></i>
+                                    <span class="font-medium ml-2 ">@giorgi_l.l.l</span>
+                        </div>            
+                            </div>
+                        </div>
                     </div>
-                </div><br><br>
-                <div class="bg-white rounded-2xl shadow-md p-6 mb-4">
-                    <h2 class="text-2xl font-bold text-center mb-6">დაგვიკავშირდით</h2>
-                    <form id="contactForm" class="space-y-4">
-                        <div>
-                            <label for="contactName" class="block text-sm font-semibold text-gray-700 mb-1">სახელი და გვარი</label>
-                            <input type="text" id="contactName" name="contactName" required class="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-gray-400 focus:outline-none" />
-                        </div>
-                        <div>
-                            <label for="contactEmail" class="block text-sm font-semibold text-gray-700 mb-1">ელ. ფოსტა</label>
-                            <input type="email" id="contactEmail" name="contactEmail" required class="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-gray-400 focus:outline-none" />
-                        </div>
-                        <div>
-                            <label for="contactMessage" class="block text-sm font-semibold text-gray-700 mb-1">თქვენი წერილი</label>
-                            <textarea id="contactMessage" name="contactMessage" rows="5" required class="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-gray-400 focus:outline-none"></textarea>
-                        </div>
-                        <button type="submit" class="w-full bg-gray-900 text-white font-semibold py-3 rounded-xl hover:bg-gray-700 transition">გაგზავნა</button>
-                    </form>
                 </div>
             </section>
             <section id="bookingsView" class="hidden space-y-4"></section>
@@ -216,10 +222,6 @@
                     <i class="fas fa-phone-alt text-xl text-gray-600"></i>
                     <span class="font-medium">დაგვირეკეთ: <span class="underline"></span></span>
                 </a>
-                <a href="#" id="placeDetailWhatsapp" target="_blank" class="flex items-center gap-4 bg-gray-100 p-4 rounded-xl text-gray-800 hover:bg-gray-200 transition">
-                    <i class="fab fa-whatsapp text-xl text-green-500"></i>
-                    <span class="font-medium">მოგვწერეთ WhatsApp-ზე</span>
-                </a>
                 <button id="btnOpenBooking" class="w-full py-4 rounded-xl font-semibold bg-gray-900 text-white hover:bg-gray-700 transition active:scale-95">დაჯავშნა</button>
             </div>
         </div>
@@ -262,23 +264,15 @@
     <script>
       (() => {
         "use strict";
-const firebaseConfig = {
-    apiKey: "AIzaSyDcundXzUzWhfGWtRYz9SPltkXknjfwFyI",
-    authDomain: "locser-2c0ba.firebaseapp.com",
-    databaseURL: "https://locser-2c0ba-default-rtdb.europe-west1.firebasedatabase.app",
-    projectId: "locser-2c0ba",
-    storageBucket: "locser-2c0ba.firebasestorage.app",
-    messagingSenderId: "554975533572",
-    appId: "1:554975533572:web:fe90ab36550f5edac63351"
-};
-        const script = document.createElement('script');
-        script.src = 'https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js';
-        script.onload = () => {
-            emailjs.init({
-                publicKey: 'sFOTAWV8F_fOW1aSI' // თქვენი Public Key
-            });
+        const firebaseConfig = {
+            apiKey: "AIzaSyDcundXzUzWhfGWtRYz9SPltkXknjfwFyI",
+            authDomain: "locser-2c0ba.firebaseapp.com",
+            databaseURL: "https://locser-2c0ba-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "locser-2c0ba",
+            storageBucket: "locser-2c0ba.firebasestorage.app",
+            messagingSenderId: "554975533572",
+            appId: "1:554975533572:web:fe90ab36550f5edac63351"
         };
-        document.head.appendChild(script);
 
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
@@ -324,7 +318,6 @@ const firebaseConfig = {
         const profilePhoneInput = document.getElementById("profilePhone");
         const saveProfileBtn = document.getElementById("saveProfileBtn");
         const contactForm = document.getElementById("contactForm");
-        const contactSubmitBtn = contactForm.querySelector('button[type="submit"]');
 
         let currentTab = "explore";
         let currentFilter = "All";
@@ -334,7 +327,7 @@ const firebaseConfig = {
         let bookingsData = {};
         let userData = {};
         let authMode = "login";
-
+        
         const georgianErrorMap = {
             'auth/invalid-email': 'არასწორი ელ. ფოსტა.',
             'auth/user-disabled': 'თქვენი ანგარიში დაბლოკილია.',
@@ -357,6 +350,34 @@ const firebaseConfig = {
                 toast.classList.remove("opacity-100");
                 toast.classList.add("opacity-0");
             }, 3000);
+        }
+        
+        function showCustomConfirm(message, onConfirm) {
+            const confirmModal = document.createElement('div');
+            confirmModal.className = 'fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4';
+            confirmModal.innerHTML = `
+                <div class="bg-white rounded-xl shadow-lg p-6 space-y-4 max-w-sm w-full">
+                    <p class="text-lg font-semibold text-gray-800">${message}</p>
+                    <div class="flex justify-end gap-3">
+                        <button id="cancelBtn" class="px-4 py-2 rounded-lg text-gray-700 font-semibold hover:bg-gray-200 transition">გაუქმება</button>
+                        <button id="confirmBtn" class="px-4 py-2 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700 transition">დადასტურება</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(confirmModal);
+
+            const confirmBtn = document.getElementById('confirmBtn');
+            const cancelBtn = document.getElementById('cancelBtn');
+
+            confirmBtn.addEventListener('click', () => {
+                onConfirm(true);
+                confirmModal.remove();
+            });
+
+            cancelBtn.addEventListener('click', () => {
+                onConfirm(false);
+                confirmModal.remove();
+            });
         }
 
         function formatDateTimeLocal(dateStr) {
@@ -510,10 +531,12 @@ const firebaseConfig = {
                     cancelButton.className = "mt-3 w-full py-2 rounded-xl font-semibold bg-red-600 text-white hover:bg-red-700 transition active:scale-95";
                     cancelButton.dataset.bookingId = Object.keys(bookingsData).find(key => bookingsData[key] === booking);
                     cancelButton.addEventListener('click', async () => {
-                        if (confirm('დარწმუნებული ხართ, რომ გსურთ ჯავშნის გაუქმება?')) {
-                             await bookingsRef.child(cancelButton.dataset.bookingId).child('status').set('cancelled');
-                             showToast('ჯავშანი წარმატებით გაუქმდა');
-                        }
+                        showCustomConfirm('დარწმუნებული ხართ, რომ გსურთ ჯავშნის გაუქმება?', async (confirmed) => {
+                            if (confirmed) {
+                                await bookingsRef.child(cancelButton.dataset.bookingId).child('status').set('cancelled');
+                                showToast('ჯავშანი წარმატებით გაუქმდა');
+                            }
+                        });
                     });
                     card.appendChild(cancelButton);
                 }
@@ -546,9 +569,6 @@ const firebaseConfig = {
             const phoneLink = placeDetailModal.querySelector("#placeDetailPhone");
             phoneLink.querySelector("span").textContent = `დაგვირეკეთ: ${place.phone}`;
             phoneLink.href = `tel:${place.phone.replace(/\s+/g, "")}`;
-
-            const whatsappLink = placeDetailModal.querySelector("#placeDetailWhatsapp");
-            whatsappLink.href = `https://wa.me/${place.whatsapp}`;
 
             const gallery = placeDetailModal.querySelector("#placeDetailGallery");
             gallery.innerHTML = "";
@@ -695,10 +715,6 @@ const firebaseConfig = {
             
             const place = selectedPlace;
             
-            const body = encodeURIComponent(
-                `გამარჯობა, მსურს დავჯავშნო:\n- ადგილი: ${place.name}\n- ვარიანტი: ${option ? option.title : ""}\n- თარიღი და დრო: ${formatDateTimeLocal(date)}\n- სახელი: ${name}\n- ტელეფონი: ${phone}\nგმადლობთ.`
-            );
-            
             closeBookingModalFunc();
             closePlaceDetailModal();
 
@@ -710,7 +726,6 @@ const firebaseConfig = {
                 <p class="text-sm text-gray-600">თქვენი ჯავშნის მოთხოვნა გაეგზავნა მომსახურების მიმწოდებელს. დამატებითი ინფორმაციისთვის შეგიძლიათ დაუკავშირდეთ მათ.</p>
                 <div class="flex gap-4 w-full">
                     <a href="tel:${place.phone.replace(/\s+/g, "")}" class="flex-1 py-3 rounded-xl font-semibold bg-gray-200 text-gray-900 hover:bg-gray-300 transition active:scale-95"><i class="fas fa-phone-alt mr-2"></i>დარეკვა</a>
-                    <a href="https://wa.me/${place.whatsapp}?text=${body}" target="_blank" class="flex-1 py-3 rounded-xl font-semibold bg-green-500 text-white hover:bg-green-600 transition active:scale-95"><i class="fab fa-whatsapp mr-2"></i>WhatsApp</a>
                 </div>
             `;
 
@@ -726,44 +741,6 @@ const firebaseConfig = {
                     customToast.remove();
                 }, 300);
             }, 10000);
-        });
-
-        // EmailJS-ით საკონტაქტო ფორმის გაგზავნა
-        contactForm.addEventListener("submit", async (e) => {
-            e.preventDefault();
-
-            contactSubmitBtn.textContent = 'მიმდინარეობს გაგზავნა...';
-            contactSubmitBtn.disabled = true;
-
-            const name = document.getElementById("contactName").value;
-            const email = document.getElementById("contactEmail").value;
-            const message = document.getElementById("contactMessage").value;
-            
-            const templateParams = {
-                from_name: name,
-                from_email: email,
-                message: message,
-            };
-
-            try {
-                // შეტყობინების შენახვა Firebase-ში
-                await contactRef.push({
-                    name,
-                    email,
-                    message,
-                    createdAt: firebase.database.ServerValue.TIMESTAMP
-                });
-
-                await emailjs.send('service_hvtetul', 'template_rns1jo8', templateParams);
-                showToast("თქვენი შეტყობინება წარმატებით გაიგზავნა!");
-                contactForm.reset();
-            } catch (error) {
-                console.error("Contact form submission error:", error);
-                showToast("შეტყობინების გაგზავნა ვერ მოხერხდა.");
-            } finally {
-                contactSubmitBtn.textContent = 'გაგზავნა';
-                contactSubmitBtn.disabled = false;
-            }
         });
 
         profileForm.addEventListener("submit", async (e) => {
