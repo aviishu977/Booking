@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="ka">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ადმინისტრატორის პანელი</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <style>
+        @font-face {
+            font-family: 'MyFont';
+            src: url('alk-sanet.ttf');
+        }
+        * {
+            font-family: 'MyFont', sans-serif;
+            line-height: 1.5;
+        }
+        .hidden { display: none; }
+        .tab-button.active {
+            background-color: #374151;
+            color: white;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-900 font-sans min-h-screen flex flex-col">
+
+    <div id="authContainer" class="flex flex-col items-center justify-center min-h-screen bg-gray-200 p-4">
+        <div class="bg-white p-8 rounded-2xl shadow-lg w-full max-w-sm">
+            <h1 class="text-3xl font-bold text-center mb-6">ადმინისტრატორის შესვლა</h1>
+            <p class="text-center text-gray-600 mb-6">შედით თქვენი ადმინისტრატორის ანგარიშით პანელზე წვდომისთვის.</p>
+            <form id="loginForm" class="space-y-4">
+                <div>
+                    <label for="email" class="block text-sm font-medium text-gray-700 mb-1">ელ. ფოსტა</label>
+                    <input type="email" id="email" required class="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-gray-400 focus:outline-none" />
+                </div>
+                <div>
+                    <label for="password" class="block text-sm font-medium text-gray-700 mb-1">პაროლი</label>
+                    <input type="password" id="password" required class="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-gray-400 focus:outline-none" />
+                </div>
+                <button type="submit" class="w-full bg-gray-900 text-white font-semibold py-3 rounded-xl hover:bg-gray-700 transition">შესვლა</button>
+            </form>
+            <p id="authMessage" class="mt-4 text-center text-red-500 font-semibold hidden"></p>
+        </div>
+    </div>
+
+    <div id="dashboardContainer" class="hidden flex-1 flex flex-col">
+        <header class="bg-gray-900 text-white p-4 shadow-lg flex justify-between items-center sticky top-0 z-10">
+            <h2 class="text-xl font-bold">ადმინისტრატორის პანელი</h2>
+            <button id="logoutBtn" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition">გასვლა</button>
+        </header>
+        <div class="flex-1 flex flex-col md:flex-row">
+            <nav class="bg-gray-800 text-gray-200 p-4 w-full md:w-64 flex flex-col">
+                <div class="mb-6 space-y-2">
+                    <div class="bg-gray-700 p-3 rounded-xl flex flex-col items-center text-center">
+                        <i class="fas fa-users text-2xl text-green-400 mb-2"></i>
+                        <p class="text-sm">აქტიური მომხმარებლები</p>
+                        <span id="liveUsersCount" class="text-2xl font-bold text-white">0</span>
+                    </div>
+                    <div class="bg-gray-700 p-3 rounded-xl flex flex-col items-center text-center">
+                        <i class="fas fa-calendar-check text-2xl text-blue-400 mb-2"></i>
+                        <p class="text-sm">ჯამური ჯავშნები</p>
+                        <span id="totalBookingsCount" class="text-2xl font-bold text-white">0</span>
+                    </div>
+                </div>
+                <button data-tab="places" class="tab-button active w-full text-left px-4 py-3 rounded-lg hover:bg-gray-700 transition flex items-center gap-3"><i class="fas fa-store"></i>ადგილების მართვა</button>
+                <button data-tab="bookings" class="tab-button w-full text-left px-4 py-3 rounded-lg hover:bg-gray-700 transition flex items-center gap-3 relative"><i class="fas fa-calendar-alt"></i>ჯავშნები<span id="pendingBookingsBadge" class="absolute top-1 right-1 text-xs bg-red-500 text-white font-bold rounded-full h-5 w-5 flex items-center justify-center p-1 hidden"></span></button>
+         
+            </nav>
+            <main class="flex-1 p-6 overflow-y-auto">
+                <section id="placesTab" class="tab-content space-y-6">
+                    <h3 class="text-2xl font-bold text-gray-800">ადგილების მართვა</h3>
+                    <div id="placeFormContainer" class="bg-white p-6 rounded-2xl shadow-md">
+                        <h4 class="text-xl font-semibold mb-4" id="formTitle">ახალი ადგილის დამატება</h4>
+                        <form id="placeForm" class="space-y-4">
+                            <input type="hidden" id="placeId" />
+                            <div>
+                                <label for="name" class="block text-sm font-medium text-gray-700">სახელი</label>
+                                <input type="text" id="name" required class="w-full px-4 py-2 border rounded-lg" />
+                            </div>
+                            <div>
+                                <label for="category" class="block text-sm font-medium text-gray-700">კატეგორია</label>
+                                <select id="category" required class="w-full px-4 py-2 border rounded-lg">
+                                    <option value="Fast Food">სწრაფი კვება</option>
+                                    <option value="Restaurant">რესტორანი</option>
+                                    <option value="Hotel">სასტუმრო</option>
+                                    <option value="Canteen">კაფეტერია</option>
+                                    <option value="Coffee Shop">ყავის მაღაზია</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="description" class="block text-sm font-medium text-gray-700">აღწერა</label>
+                                <textarea id="description" rows="3" required class="w-full px-4 py-2 border rounded-lg"></textarea>
+                            </div>
+                            <div>
+                                <label for="short" class="block text-sm font-medium text-gray-700">მოკლე აღწერა</label>
+                                <input type="text" id="short" required class="w-full px-4 py-2 border rounded-lg" />
+                            </div>
+                            <div>
+                                <label for="rating" class="block text-sm font-medium text-gray-700">რეიტინგი (0-5)</label>
+                                <input type="number" step="0.1" id="rating" required min="0" max="5" class="w-full px-4 py-2 border rounded-lg" />
+                            </div>
+                            <div>
+                                <label for="priceTier" class="block text-sm font-medium text-gray-700">ფასის კატეგორია ($)</label>
+                                <input type="text" id="priceTier" required class="w-full px-4 py-2 border rounded-lg" />
+                            </div>
+                            <div>
+                                <label for="photos" class="block text-sm font-medium text-gray-700">ფოტოების URL-ები (გამოყოფილი მძიმით)</label>
+                                <input type="text" id="photos" required class="w-full px-4 py-2 border rounded-lg" />
+                            </div>
+                            <div>
+                                <label for="address" class="block text-sm font-medium text-gray-700">მისამართი</label>
+                                <input type="text" id="address" required class="w-full px-4 py-2 border rounded-lg" />
+                            </div>
+                            <div>
+                                <label for="coordsLat" class="block text-sm font-medium text-gray-700">გრძედი</label>
+                                <input type="number" step="0.0001" id="coordsLat" required class="w-full px-4 py-2 border rounded-lg" />
+                            </div>
+                            <div>
+                                <label for="coordsLng" class="block text-sm font-medium text-gray-700">განედი</label>
+                                <input type="number" step="0.0001" id="coordsLng" required class="w-full px-4 py-2 border rounded-lg" />
+                            </div>
+                            <div>
+                                <label for="phone" class="block text-sm font-medium text-gray-700">ტელეფონი</label>
+                                <input type="tel" id="phone" required class="w-full px-4 py-2 border rounded-lg" />
+                            </div>
+                            <div>
+                                <label for="whatsapp" class="block text-sm font-medium text-gray-700">WhatsApp</label>
+                                <input type="tel" id="whatsapp" required class="w-full px-4 py-2 border rounded-lg" />
+                            </div>
+                            <div>
+                                <label for="openingHours" class="block text-sm font-medium text-gray-700">სამუშაო საათები</label>
+                                <input type="text" id="openingHours" required class="w-full px-4 py-2 border rounded-lg" />
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">ჯავშნის ვარიანტები</label>
+                                <div id="bookingOptionsContainer" class="space-y-2"></div>
+                                <div class="flex gap-2 mt-2">
+                                    <button type="button" id="addOptionBtn" class="bg-gray-200 text-gray-800 px-3 py-1 rounded-md text-sm font-semibold hover:bg-gray-300 transition">ვარიანტის დამატება</button>
+                                    <button type="button" id="removeOptionBtn" class="bg-gray-200 text-gray-800 px-3 py-1 rounded-md text-sm font-semibold hover:bg-gray-300 transition">ბოლო ვარიანტის წაშლა</button>
+                                </div>
+                            </div>
+                            <button type="submit" class="w-full bg-blue-600 text-white font-semibold py-3 rounded-xl hover:bg-blue-700 transition">ადგილის შენახვა</button>
+                        </form>
+                    </div>
+                    <div id="placesList" class="bg-white p-6 rounded-2xl shadow-md space-y-4">
+                        <h4 class="text-xl font-semibold">არსებული ადგილები</h4>
+                    </div>
+                </section>
+                <section id="bookingsTab" class="tab-content hidden space-y-6">
+                    <h3 class="text-2xl font-bold text-gray-800">ჯავშნის მოთხოვნები</h3>
+                    <div id="bookingsList" class="bg-white p-6 rounded-2xl shadow-md space-y-4"></div>
+                </section>
+                <section id="usersTab" class="tab-content hidden space-y-6">
+                    <h3 class="text-2xl font-bold text-gray-800">მომხმარებლების მართვა</h3>
+                    <div id="usersList" class="bg-white p-6 rounded-2xl shadow-md space-y-4"></div>
+                </section>
+                <section id="contactMessagesTab" class="tab-content hidden space-y-6">
+                    <h3 class="text-2xl font-bold text-gray-800">შეტყობინებები</h3>
+                    <div id="contactMessagesList" class="bg-white p-6 rounded-2xl shadow-md space-y-4"></div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <script>
+        (() => {
+            "use strict";
+const firebaseConfig = {
+    apiKey: "AIzaSyDcundXzUzWhfGWtRYz9SPltkXknjfwFyI",
+    authDomain: "locser-2c0ba.firebaseapp.com",
+    databaseURL: "https://locser-2c0ba-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "locser-2c0ba",
+    storageBucket: "locser-2c0ba.firebasestorage.app",
+    messagingSenderId: "554975533572",
+    appId: "1:554975533572:web:fe90ab36550f5edac63351"
+};
+
+            firebase.initializeApp(firebaseConfig);
+            const auth = firebase.auth();
+            const db = firebase.database();
+            const placesRef = db.ref('places');
+            const bookingsRef = db.ref('bookings');
+            const usersRef = db.ref('users');
+            const analyticsRef = db.ref('analytics');
+            const contactRef = db.ref('contactMessages');
+            
+            const ADMIN_EMAIL = "nadashviligio707@gmail.com";
+
+            const authContainer = document.getElementById("authContainer");
+            const loginForm = document.getElementById("loginForm");
+            const emailInput = document.getElementById("email");
+            const passwordInput = document.getElementById("password");
+            const authMessage = document.getElementById("authMessage");
+            const dashboardContainer = document.getElementById("dashboardContainer");
+            const logoutBtn = document.getElementById("logoutBtn");
+            const tabButtons = document.querySelectorAll(".tab-button");
+            const tabContents = document.querySelectorAll(".tab-content");
+            const pendingBookingsBadge = document.getElementById("pendingBookingsBadge");
+
+            const placesList = document.getElementById("placesList");
+            const placeForm = document.getElementById("placeForm");
+            const formTitle = document.getElementById("formTitle");
+
+            const bookingsList = document.getElementById("bookingsList");
+            const usersList = document.getElementById("usersList");
+            const contactMessagesList = document.getElementById("contactMessagesList");
+
+            const liveUsersCount = document.getElementById("liveUsersCount");
+            const totalBookingsCount = document.getElementById("totalBookingsCount");
+
+            const bookingOptionsContainer = document.getElementById("bookingOptionsContainer");
+            const addOptionBtn = document.getElementById("addOptionBtn");
+            const removeOptionBtn = document.getElementById("removeOptionBtn");
+
+            let currentPlaces = {};
+            let currentBookings = {};
+            let currentUsers = {};
+
+            const georgianErrorMap = {
+                'auth/invalid-email': 'არასწორი ელ. ფოსტა.',
+                'auth/user-disabled': 'თქვენი ანგარიში დაბლოკილია.',
+                'auth/user-not-found': 'მომხმარებელი ვერ მოიძებნა.',
+                'auth/wrong-password': 'არასწორი პაროლი.',
+                'auth/email-already-in-use': 'ასეთი ელ. ფოსტა უკვე არსებობს.',
+                'auth/weak-password': 'პაროლი ძალიან სუსტია. მინიმუმ 6 სიმბოლო.',
+                'default': 'მოხდა უცნობი შეცდომა.'
+            };
+
+            function getGeorgianErrorMessage(errorCode) {
+                return georgianErrorMap[errorCode] || georgianErrorMap['default'];
+            }
+
+            function switchTab(tabName) {
+                tabButtons.forEach(btn => btn.classList.remove("active"));
+                tabContents.forEach(tab => tab.classList.add("hidden"));
+                document.querySelector(`[data-tab="${tabName}"]`).classList.add("active");
+                document.getElementById(`${tabName}Tab`).classList.remove("hidden");
+            }
+
+            function formatTimestamp(timestamp) {
+                const date = new Date(timestamp);
+                return date.toLocaleString('ka-GE', { dateStyle: 'long', timeStyle: 'short' });
+            }
+
+            function renderPlaces() {
+                placesList.innerHTML = '<h4 class="text-xl font-semibold">არსებული ადგილები</h4>';
+                const placeArray = Object.values(currentPlaces);
+                if (placeArray.length === 0) {
+                    placesList.innerHTML += '<p class="text-gray-500 mt-2">ადგილები არ მოიძებნა. დაამატეთ ზემოთ.</p>';
+                    return;
+                }
+                placeArray.forEach(place => {
+                    const placeEl = document.createElement("div");
+                    placeEl.className = "p-4 border-b last:border-b-0 flex items-center justify-between";
+                    placeEl.innerHTML = `
+                        <div>
+                            <p class="font-semibold text-lg">${place.name}</p>
+                            <p class="text-sm text-gray-600">${place.category}</p>
+                        </div>
+                        <div class="space-x-2 flex">
+                            <button class="edit-btn text-blue-500 hover:text-blue-700 transition" data-id="${place.id}" title="რედაქტირება"><i class="fas fa-edit"></i></button>
+                            <button class="delete-btn text-red-500 hover:text-red-700 transition" data-id="${place.id}" title="წაშლა"><i class="fas fa-trash"></i></button>
+                        </div>
+                    `;
+                    placesList.appendChild(placeEl);
+                });
+            }
+
+            function renderBookings() {
+                bookingsList.innerHTML = '';
+                const bookingArray = Object.entries(currentBookings);
+                
+                const pendingBookings = bookingArray.filter(([, booking]) => booking.status === 'pending');
+                const otherBookings = bookingArray.filter(([, booking]) => booking.status !== 'pending');
+
+                if (pendingBookings.length > 0) {
+                    pendingBookingsBadge.textContent = pendingBookings.length;
+                    pendingBookingsBadge.classList.remove('hidden');
+                } else {
+                    pendingBookingsBadge.classList.add('hidden');
+                }
+
+                if (pendingBookings.length > 0) {
+                    bookingsList.innerHTML += '<h4 class="text-md font-bold text-gray-700">მოლოდინში მყოფი ჯავშნები</h4>';
+                    pendingBookings.sort(([, a], [, b]) => b.createdAt - a.createdAt).forEach(renderSingleBooking);
+                    bookingsList.innerHTML += '<hr class="my-4 border-gray-300">';
+                }
+
+                if (otherBookings.length > 0) {
+                    bookingsList.innerHTML += '<h4 class="text-md font-bold text-gray-700">სხვა ჯავშნები</h4>';
+                    otherBookings.sort(([, a], [, b]) => b.createdAt - a.createdAt).forEach(renderSingleBooking);
+                }
+
+                if (bookingArray.length === 0) {
+                    bookingsList.innerHTML = '<p class="text-gray-500 mt-2">ჯავშნის მოთხოვნები არ არის.</p>';
+                }
+            }
+
+            function renderSingleBooking([key, booking]) {
+                const place = currentPlaces[booking.placeId] || { name: 'უცნობი ადგილი' };
+                let statusColor = '';
+                let statusText = '';
+                if (booking.status === 'confirmed') {
+                    statusColor = 'bg-green-100 text-green-700';
+                    statusText = 'დადასტურებული';
+                } else if (booking.status === 'cancelled') {
+                    statusColor = 'bg-red-100 text-red-700';
+                    statusText = 'გაუქმებული';
+                } else {
+                    statusColor = 'bg-yellow-100 text-yellow-700';
+                    statusText = 'მოლოდინში';
+                }
+
+                const bookingEl = document.createElement("div");
+                bookingEl.className = `p-4 border rounded-xl shadow-sm ${statusColor}`;
+                bookingEl.innerHTML = `
+                    <p class="text-sm font-semibold">${place.name}</p>
+                    <p class="text-xs text-gray-700">${booking.name} | ${booking.phone}</p>
+                    <p class="text-xs text-gray-700"><strong>ვარიანტი:</strong> ${booking.bookingOptionTitle || 'არ არის მითითებული'}</p>
+                    <p class="text-xs text-gray-700"><strong>თარიღი:</strong> ${new Date(booking.date).toLocaleString('ka-GE', { dateStyle: 'short', timeStyle: 'short' })}</p>
+                    <p class="mt-2 text-sm">სტატუსი: <span class="font-bold">${statusText.toUpperCase()}</span></p>
+                    <div class="mt-3 flex gap-2">
+                        <button class="confirm-btn text-xs bg-green-500 text-white px-3 py-1 rounded-full hover:bg-green-600 transition disabled:opacity-50" data-id="${key}" ${booking.status === 'confirmed' ? 'disabled' : ''}>დადასტურება</button>
+                        <button class="cancel-btn text-xs bg-red-500 text-white px-3 py-1 rounded-full hover:bg-red-600 transition disabled:opacity-50" data-id="${key}" ${booking.status === 'cancelled' ? 'disabled' : ''}>გაუქმება</button>
+                    </div>
+                `;
+                bookingsList.appendChild(bookingEl);
+            }
+
+            function renderUsers() {
+                usersList.innerHTML = '<h4 class="text-xl font-semibold">რეგისტრირებული მომხმარებლები</h4>';
+                const userArray = Object.values(currentUsers);
+                if (userArray.length === 0) {
+                    usersList.innerHTML += '<p class="text-gray-500 mt-2">რეგისტრირებული მომხმარებლები არ არიან.</p>';
+                    return;
+                }
+                userArray.forEach(user => {
+                    const userEl = document.createElement("div");
+                    userEl.className = "p-4 border-b last:border-b-0";
+                    userEl.innerHTML = `
+                        <p class="font-semibold text-lg">${user.name || 'N/A'}</p>
+                        <p class="text-sm text-gray-600">${user.email}</p>
+                    `;
+                    usersList.appendChild(userEl);
+                });
+            }
+
+            function renderContactMessages(messages) {
+                contactMessagesList.innerHTML = '';
+                const messagesArray = Object.entries(messages || {});
+                if (messagesArray.length === 0) {
+                    contactMessagesList.innerHTML = '<p class="text-gray-500 mt-2">შეტყობინებები არ არის.</p>';
+                    return;
+                }
+                messagesArray.sort(([, a], [, b]) => b.createdAt - a.createdAt).forEach(([key, msg]) => {
+                    const messageEl = document.createElement("div");
+                    messageEl.className = "p-4 border rounded-xl shadow-sm bg-white";
+                    messageEl.innerHTML = `
+                        <p class="font-semibold text-gray-900">${msg.name} <span class="text-sm text-gray-500">(${msg.email})</span></p>
+                        <p class="text-sm text-gray-600 mt-1">${formatTimestamp(msg.createdAt)}</p>
+                        <p class="mt-2 text-gray-800">${msg.message}</p>
+                    `;
+                    contactMessagesList.appendChild(messageEl);
+                });
+            }
+
+            function createBookingOptionInput(title = '', price = '') {
+                const optionGroup = document.createElement("div");
+                optionGroup.className = "flex flex-col sm:flex-row gap-2 items-center";
+                optionGroup.innerHTML = `
+                    <input type="text" placeholder="ვარიანტის დასახელება (მაგ., მაგიდა 2-ისთვის)" value="${title}" required class="w-full px-4 py-2 border rounded-lg booking-option-title" />
+                    <input type="number" placeholder="ფასი (არასავალდებულო)" value="${price}" class="w-full sm:w-24 px-4 py-2 border rounded-lg booking-option-price" />
+                `;
+                return optionGroup;
+            }
+
+            function resetPlaceForm() {
+                placeForm.reset();
+                document.getElementById("placeId").value = "";
+                formTitle.textContent = "ახალი ადგილის დამატება";
+                document.querySelector('button[type="submit"]').textContent = "ადგილის შენახვა";
+                bookingOptionsContainer.innerHTML = '';
+                bookingOptionsContainer.appendChild(createBookingOptionInput());
+            }
+
+            loginForm.addEventListener("submit", async (e) => {
+                e.preventDefault();
+                const email = emailInput.value;
+                const password = passwordInput.value;
+                authMessage.classList.add("hidden");
+
+                try {
+                    const userCredential = await auth.signInWithEmailAndPassword(email, password);
+                    if (userCredential.user.email !== ADMIN_EMAIL) {
+                        await auth.signOut();
+                        authMessage.textContent = "თქვენ არ გაქვთ ადმინისტრატორის უფლებები.";
+                        authMessage.classList.remove("hidden");
+                    }
+                } catch (error) {
+                    authMessage.textContent = getGeorgianErrorMessage(error.code);
+                    authMessage.classList.remove("hidden");
+                }
+            });
+
+            logoutBtn.addEventListener("click", () => {
+                auth.signOut();
+            });
+
+            auth.onAuthStateChanged(user => {
+                if (user && user.email === ADMIN_EMAIL) {
+                    authContainer.classList.add("hidden");
+                    dashboardContainer.classList.remove("hidden");
+                    switchTab("places");
+                } else {
+                    authContainer.classList.remove("hidden");
+                    dashboardContainer.classList.add("hidden");
+                }
+            });
+
+            tabButtons.forEach(btn => {
+                btn.addEventListener("click", () => {
+                    switchTab(btn.dataset.tab);
+                    if (btn.dataset.tab === 'bookings' && pendingBookingsBadge) {
+                         pendingBookingsBadge.classList.add('hidden');
+                    }
+                });
+            });
+            
+            addOptionBtn.addEventListener("click", () => {
+                bookingOptionsContainer.appendChild(createBookingOptionInput());
+            });
+
+            removeOptionBtn.addEventListener("click", () => {
+                const options = bookingOptionsContainer.querySelectorAll('div');
+                if (options.length > 1) {
+                    options[options.length - 1].remove();
+                }
+            });
+
+            placeForm.addEventListener("submit", async (e) => {
+                e.preventDefault();
+                const placeId = document.getElementById("placeId").value;
+                
+                const bookingOptions = Array.from(bookingOptionsContainer.querySelectorAll('div')).map((option, index) => {
+                    const title = option.querySelector('.booking-option-title').value;
+                    const priceInput = option.querySelector('.booking-option-price').value;
+                    const price = priceInput ? parseFloat(priceInput) : 0;
+                    return { id: `option-${index + 1}`, title, price };
+                });
+
+                const newPlace = {
+                    name: document.getElementById("name").value,
+                    category: document.getElementById("category").value,
+                    short: document.getElementById("short").value,
+                    description: document.getElementById("description").value,
+                    rating: parseFloat(document.getElementById("rating").value),
+                    priceTier: document.getElementById("priceTier").value,
+                    photos: document.getElementById("photos").value.split(',').map(s => s.trim()).filter(s => s),
+                    address: document.getElementById("address").value,
+                    coords: {
+                        lat: parseFloat(document.getElementById("coordsLat").value),
+                        lng: parseFloat(document.getElementById("coordsLng").value),
+                    },
+                    phone: document.getElementById("phone").value,
+                    whatsapp: document.getElementById("whatsapp").value,
+                    openingHours: document.getElementById("openingHours").value,
+                    bookingOptions: bookingOptions
+                };
+
+                try {
+                    if (placeId) {
+                        await placesRef.child(placeId).set(newPlace);
+                        alert("ადგილი წარმატებით განახლდა!");
+                    } else {
+                        const newPlaceRef = placesRef.push();
+                        newPlace.id = newPlaceRef.key;
+                        await newPlaceRef.set(newPlace);
+                        alert("ადგილი წარმატებით დაემატა!");
+                    }
+                    resetPlaceForm();
+                } catch (error) {
+                    console.error("ადგილის შენახვის შეცდომა:", error);
+                    alert("ადგილის შენახვის შეცდომა. დეტალებისთვის შეამოწმეთ კონსოლი.");
+                }
+            });
+
+            placesList.addEventListener("click", (e) => {
+                const target = e.target.closest("button");
+                if (!target) return;
+                const id = target.dataset.id;
+                const place = currentPlaces[id];
+                if (!place) return;
+
+                if (target.classList.contains("edit-btn")) {
+                    document.getElementById("placeId").value = id;
+                    document.getElementById("name").value = place.name;
+                    document.getElementById("category").value = place.category;
+                    document.getElementById("description").value = place.description;
+                    document.getElementById("short").value = place.short;
+                    document.getElementById("rating").value = place.rating;
+                    document.getElementById("priceTier").value = place.priceTier;
+                    document.getElementById("photos").value = place.photos.join(', ');
+                    document.getElementById("address").value = place.address;
+                    document.getElementById("coordsLat").value = place.coords.lat;
+                    document.getElementById("coordsLng").value = place.coords.lng;
+                    document.getElementById("phone").value = place.phone;
+                    document.getElementById("whatsapp").value = place.whatsapp;
+                    document.getElementById("openingHours").value = place.openingHours;
+                    
+                    bookingOptionsContainer.innerHTML = '';
+                    if (place.bookingOptions && place.bookingOptions.length > 0) {
+                        place.bookingOptions.forEach(option => {
+                            bookingOptionsContainer.appendChild(createBookingOptionInput(option.title, option.price));
+                        });
+                    } else {
+                        bookingOptionsContainer.appendChild(createBookingOptionInput());
+                    }
+                    
+                    formTitle.textContent = "ადგილის რედაქტირება";
+                    document.querySelector('button[type="submit"]').textContent = "ადგილის განახლება";
+                } else if (target.classList.contains("delete-btn")) {
+                    if (confirm(`დარწმუნებული ხართ, რომ გსურთ ${place.name}-ის წაშლა?`)) {
+                        placesRef.child(id).remove().then(() => {
+                            alert("ადგილი წარმატებით წაიშალა!");
+                        }).catch(error => {
+                            console.error("ადგილის წაშლის შეცდომა:", error);
+                            alert("ადგილის წაშლის შეცდომა.");
+                        });
+                    }
+                }
+            });
+
+            bookingsList.addEventListener("click", async (e) => {
+                const target = e.target.closest("button");
+                if (!target) return;
+                const bookingId = target.dataset.id;
+                const newStatus = target.classList.contains("confirm-btn") ? "confirmed" : "cancelled";
+                try {
+                    await bookingsRef.child(bookingId).child('status').set(newStatus);
+                    if (newStatus === 'confirmed') {
+                        await analyticsRef.child('totalBookings').transaction(currentValue => (currentValue || 0) + 1);
+                    }
+                    alert(`ჯავშნის სტატუსი შეიცვალა ${newStatus}-ზე.`);
+                } catch (error) {
+                    console.error("ჯავშნის სტატუსის განახლების შეცდომა:", error);
+                    alert("ჯავშნის სტატუსის განახლების შეცდომა.");
+                }
+            });
+            
+            placesRef.on('value', snapshot => {
+                currentPlaces = snapshot.val() || {};
+                renderPlaces();
+                renderBookings();
+            });
+
+            bookingsRef.on('value', snapshot => {
+                currentBookings = snapshot.val() || {};
+                renderBookings();
+            });
+
+            usersRef.on('value', snapshot => {
+                currentUsers = snapshot.val() || {};
+                renderUsers();
+            });
+
+            contactRef.on('value', snapshot => {
+                const messages = snapshot.val() || {};
+                renderContactMessages(messages);
+            });
+
+            analyticsRef.child('presence').on('value', snapshot => {
+                 analyticsRef.child('activeUsers').set(snapshot.numChildren());
+            });
+
+            analyticsRef.child('totalBookings').on('value', snapshot => {
+                totalBookingsCount.textContent = snapshot.val() || 0;
+            });
+            
+            bookingOptionsContainer.appendChild(createBookingOptionInput());
+        })();
+    </script>
+</body>
+</html>
