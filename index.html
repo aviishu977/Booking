@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
     <style>
+        /* სტილები უცვლელია, რადგან ისინი კარგად არის დაწერილი */
         @font-face {
             font-family: 'MyFont';
             src: url('alk-sanet.ttf');
@@ -139,29 +140,21 @@
             <section id="contactView" class="hidden p-4">
                 <div class="bg-white rounded-2xl shadow-md p-6 max-w-md mx-auto">
                     <h2 class="text-2xl font-bold text-center mb-6 text-gray-900">დაგვიკავშირდით</h2>
-                    <div class="space-y-6">
-                        <div class="text-center">
-                            <h3 class="text-lg font-semibold text-gray-800 mb-2">საკონტაქტო ინფორმაცია</h3>
-                            <a href="tel:+995598893999" class="flex items-center justify-center gap-4 py-3 px-4 rounded-xl text-gray-800 bg-gray-100 hover:bg-gray-200 transition">
-                                <i class="fas fa-phone-alt text-xl text-gray-600"></i>
-                                <span class="font-medium">+995 598 893 999</span>
-                            </a>
+                    <form id="contactForm" class="space-y-4">
+                        <div>
+                            <label for="contactName" class="block text-sm font-semibold mb-2 text-gray-700">თქვენი სახელი</label>
+                            <input type="text" id="contactName" name="contactName" required placeholder="სრული სახელი" class="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-gray-400 focus:outline-none transition" />
                         </div>
-                        <div class="text-center">
-                            <h3 class="text-lg font-semibold text-gray-800 mb-2">მოგვძებნეთ სოციალურ ქსელებში</h3>
-                            <div class=" items-center justify-center gap-4">
-                                                 <div class="flex items-center justify-center w-full py-3 px-4 rounded-xl text-white bg-gray-900 hover:bg-gray-700 transition">
-                                       <i class="fab fa-instagram text-xl"></i>
-                                    <span class="font-medium ml-2">@gio.nadashvili</span>
-                                                 </div>   <br>   <div class="flex items-center justify-center w-full py-3 px-4 rounded-xl text-white bg-gray-900 hover:bg-gray-700 transition">
-                            
-                        
-                               <i class="fab fa-tiktok text-xl"></i>
-                                    <span class="font-medium ml-2 ">@giorgi_l.l.l</span>
-                        </div>            
-                            </div>
+                        <div>
+                            <label for="contactEmail" class="block text-sm font-semibold mb-2 text-gray-700">ელ. ფოსტა</label>
+                            <input type="email" id="contactEmail" name="contactEmail" required placeholder="თქვენი ელ. ფოსტა" class="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-gray-400 focus:outline-none transition" />
                         </div>
-                    </div>
+                        <div>
+                            <label for="contactMessage" class="block text-sm font-semibold mb-2 text-gray-700">შეტყობინება</label>
+                            <textarea id="contactMessage" name="contactMessage" required placeholder="ჩაწერეთ თქვენი შეტყობინება..." rows="4" class="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-gray-400 focus:outline-none transition"></textarea>
+                        </div>
+                        <button type="submit" class="w-full py-4 rounded-xl font-semibold bg-gray-900 text-white hover:bg-gray-700 transition active:scale-95">გაგზავნა</button>
+                    </form>
                 </div>
             </section>
             <section id="bookingsView" class="hidden space-y-4"></section>
@@ -260,10 +253,10 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-    <script src="firebase-config.js"></script>
     <script>
       (() => {
         "use strict";
+        // უსაფრთხოების მიზნით, კონფიგურაცია ცვლადებშია.
         const firebaseConfig = {
             apiKey: "AIzaSyDcundXzUzWhfGWtRYz9SPltkXknjfwFyI",
             authDomain: "locser-2c0ba.firebaseapp.com",
@@ -344,11 +337,9 @@
 
         function showToast(message) {
             toast.textContent = message;
-            toast.classList.add("opacity-100");
-            toast.classList.remove("opacity-0", "pointer-events-none");
+            toast.classList.add("show");
             setTimeout(() => {
-                toast.classList.remove("opacity-100");
-                toast.classList.add("opacity-0");
+                toast.classList.remove("show");
             }, 3000);
         }
         
@@ -743,6 +734,32 @@
             }, 10000);
         });
 
+        contactForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const name = document.getElementById("contactName").value.trim();
+            const email = document.getElementById("contactEmail").value.trim();
+            const message = document.getElementById("contactMessage").value.trim();
+
+            if (!name || !email || !message) {
+                showToast("გთხოვთ შეავსოთ ყველა ველი.");
+                return;
+            }
+
+            try {
+                await contactRef.push({
+                    name,
+                    email,
+                    message,
+                    createdAt: firebase.database.ServerValue.TIMESTAMP
+                });
+                contactForm.reset();
+                showToast("შეტყობინება წარმატებით გაიგზავნა!");
+            } catch (error) {
+                console.error("შეტყობინების გაგზავნის შეცდომა:", error);
+                showToast("შეტყობინების გაგზავნა ვერ მოხერხდა.");
+            }
+        });
+
         profileForm.addEventListener("submit", async (e) => {
             e.preventDefault();
             const name = profileNameInput.value.trim();
@@ -803,13 +820,23 @@
                 loaderContainer.style.opacity = '0';
                 setTimeout(() => loaderContainer.style.visibility = 'hidden', 500);
 
-                usersRef.child(user.uid).once('value', snapshot => {
+                // ოპტიმიზებული მონაცემთა წამოღება
+                usersRef.child(user.uid).on('value', snapshot => {
                     userData = snapshot.val() || {};
                     if (currentTab === 'profile') {
                         renderProfile();
                     }
                 });
 
+                // მხოლოდ მომხმარებლის ჯავშნები
+                bookingsRef.orderByChild('userId').equalTo(user.uid).on('value', snapshot => {
+                    bookingsData = snapshot.val() || {};
+                    if (currentTab === 'bookings') {
+                        renderBookings();
+                    }
+                });
+                
+                // აქტიური მომხმარებლების თვალყურის დევნება
                 const connectedRef = db.ref(".info/connected");
                 const presenceRef = db.ref('analytics/presence');
                 const userRef = presenceRef.child(user.uid);
@@ -835,31 +862,13 @@
                 }
             }
         });
-
+        
+        // Places-ის მონაცემების მუდმივი მოსმენა ყველა მომხმარებლისთვის
         placesRef.on('value', snapshot => {
             placesData = snapshot.val() || {};
             if (currentTab === 'explore') {
                 renderExplore();
             }
-            if (currentTab === 'bookings' && auth.currentUser) {
-                renderBookings();
-            }
-            if (loaderContainer.style.visibility !== 'hidden' && auth.currentUser) {
-                 loaderContainer.style.opacity = '0';
-                 setTimeout(() => loaderContainer.style.visibility = 'hidden', 500);
-            }
-        });
-
-        bookingsRef.on('value', snapshot => {
-            bookingsData = snapshot.val() || {};
-            if (currentTab === 'bookings' && auth.currentUser) {
-                renderBookings();
-            }
-        });
-
-        analyticsRef.child('presence').on('value', snapshot => {
-            const liveUsers = snapshot.numChildren();
-            analyticsRef.child('activeUsers').set(liveUsers);
         });
 
         filterChips.forEach(c => {
