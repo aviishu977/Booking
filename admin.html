@@ -7,10 +7,9 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
     <style>
-        /* სტილები უცვლელია, რადგან ისინი კარგად არის დაწერილი */
         @font-face {
             font-family: 'MyFont';
-            src: url('alk-sanet.ttf');
+            src: url('alk-sanet.ttf'); /* დარწმუნდით, რომ ეს ფაილი ხელმისაწვდომია */
         }
         * {
             font-family: 'MyFont', sans-serif;
@@ -41,6 +40,16 @@
         }
         .tab-button.active i {
             color: #d1d5db;
+        }
+        /* წაუკითხავი შეტყობინების სტილი */
+        .message-unread {
+            background-color: #f0f9ff; 
+            border-left: 4px solid #3b82f6; 
+        }
+        /* წაკითხული შეტყობინების სტილი */
+        .message-read {
+            background-color: #f9fafb; /* ოდნავ ნაცრისფერი */
+            border-left: 4px solid #e5e7eb; /* ღია ნაცრისფერი ზოლი */
         }
     </style>
 </head>
@@ -234,7 +243,6 @@
     <script>
         (() => {
             "use strict";
-            // უსაფრთხოების მიზნით, კონფიგურაცია ცვლადებშია.
             const firebaseConfig = {
             apiKey: "AIzaSyDcundXzUzWhfGWtRYz9SPltkXknjfwFyI",
             authDomain: "locser-2c0ba.firebaseapp.com",
@@ -288,7 +296,7 @@
             let currentPlaces = {};
             let currentBookings = {};
             let currentUsers = {};
-            let unreadMessagesCount = 0;
+            let unreadMessageIds = new Set(); // ინახავს წაუკითხავი შეტყობინებების ID-ებს
 
             const georgianErrorMap = {
                 'auth/invalid-email': 'არასწორი ელ. ფოსტა.',
@@ -325,9 +333,12 @@
                 activeTabButton.querySelector('i').classList.add('text-white');
                 document.getElementById(`${tabName}Tab`).classList.remove("hidden");
                 
-                // Unread message count reset on tab change
                 if (tabName === 'contactMessages') {
-                    unreadMessagesCount = 0;
+                    const currentUnreadMessages = Array.from(unreadMessageIds); 
+                    currentUnreadMessages.forEach(messageId => {
+                        contactRef.child(messageId).update({ isRead: true });
+                    });
+                    unreadMessageIds.clear(); 
                     updateContactMessagesBadge();
                 }
             }
@@ -338,8 +349,9 @@
             }
 
             function updateContactMessagesBadge() {
-                if (unreadMessagesCount > 0) {
-                    contactMessagesBadge.textContent = unreadMessagesCount;
+                const count = unreadMessageIds.size;
+                if (count > 0) {
+                    contactMessagesBadge.textContent = count;
                     contactMessagesBadge.classList.remove('hidden');
                 } else {
                     contactMessagesBadge.classList.add('hidden');
@@ -392,8 +404,9 @@
                 const pendingBookings = filteredBookings.filter(([, booking]) => booking.status === 'pending');
                 const otherBookings = filteredBookings.filter(([, booking]) => booking.status !== 'pending');
 
-                if (Object.values(currentBookings).filter(b => b.status === 'pending').length > 0) {
-                    pendingBookingsBadge.textContent = Object.values(currentBookings).filter(b => b.status === 'pending').length;
+                const pendingCount = Object.values(currentBookings).filter(b => b.status === 'pending').length;
+                if (pendingCount > 0) {
+                    pendingBookingsBadge.textContent = pendingCount;
                     pendingBookingsBadge.classList.remove('hidden');
                 } else {
                     pendingBookingsBadge.classList.add('hidden');
@@ -465,6 +478,7 @@
                 });
             }
 
+            // განახლებული ფუნქცია შეტყობინებების რენდერისთვის
             function renderContactMessages(messages) {
                 contactMessagesList.innerHTML = '';
                 const messagesArray = Object.entries(messages || {});
@@ -473,15 +487,32 @@
                     return;
                 }
                 messagesArray.sort(([, a], [, b]) => b.createdAt - a.createdAt).forEach(([key, msg]) => {
+                    const isRead = msg.isRead === true; 
+                    
                     const messageEl = document.createElement("div");
-                    messageEl.className = "p-4 border rounded-xl shadow-sm bg-white mb-4";
+                    // წაუკითხავი და წაკითხული შეტყობინებებისთვის განსხვავებული სტილი
+                    const messageClass = isRead ? "message-read" : "message-unread"; 
+                    messageEl.className = `p-4 border rounded-xl shadow-sm ${messageClass} mb-4 flex items-center justify-between`;
+
                     messageEl.innerHTML = `
-                        <p class="font-semibold text-gray-900">${msg.name} <span class="text-sm text-gray-500">(${msg.email})</span></p>
-                        <p class="text-sm text-gray-600 mt-1">${formatTimestamp(msg.createdAt)}</p>
-                        <p class="mt-2 text-gray-800">${msg.message}</p>
+                        <div>
+                            <p class="font-semibold text-gray-900">${msg.name} <span class="text-sm text-gray-500">(${msg.email})</span></p>
+                            <p class="text-sm text-gray-600 mt-1">${formatTimestamp(msg.createdAt)}</p>
+                            <p class="mt-2 text-gray-800">${msg.message}</p>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <button class="mark-read-btn text-xs px-3 py-1 rounded-md font-semibold transition ${isRead ? 'bg-gray-200 text-gray-700 cursor-default' : 'bg-blue-500 text-white hover:bg-blue-600'}" data-id="${key}" ${isRead ? 'disabled' : ''}>
+                                ${isRead ? 'წაკითხულია' : 'მონიშნე წაკითხულად'}
+                            </button>
+                        </div>
                     `;
                     contactMessagesList.appendChild(messageEl);
+
+                    if (!isRead) {
+                        unreadMessageIds.add(key);
+                    }
                 });
+                updateContactMessagesBadge(); 
             }
 
             function createBookingOptionInput(title = '', price = '') {
@@ -539,10 +570,19 @@
 
             tabButtons.forEach(btn => {
                 btn.addEventListener("click", () => {
-                    switchTab(btn.dataset.tab);
-                    if (btn.dataset.tab === 'bookings' && pendingBookingsBadge) {
+                    const tabName = btn.dataset.tab;
+                    switchTab(tabName);
+                    if (tabName === 'bookings' && pendingBookingsBadge) {
                          pendingBookingsBadge.classList.add('hidden');
                          renderBookings();
+                    }
+                    if (tabName === 'contactMessages') {
+                        const currentUnreadMessages = Array.from(unreadMessageIds); 
+                        currentUnreadMessages.forEach(messageId => {
+                            contactRef.child(messageId).update({ isRead: true });
+                        });
+                        unreadMessageIds.clear(); 
+                        updateContactMessagesBadge();
                     }
                 });
             });
@@ -672,11 +712,10 @@
                 renderBookings();
             });
             
-            // ოპტიმიზებული მონაცემთა წამოღება, რომლებიც მხოლოდ ადმინ პანელს სჭირდება
             placesRef.on('value', snapshot => {
                 currentPlaces = snapshot.val() || {};
                 renderPlaces();
-                renderBookings(); // განახლდება booking-ის სია place-ების განახლებისას
+                renderBookings(); 
                 totalPlacesCount.textContent = Object.keys(currentPlaces).length;
             });
 
@@ -689,17 +728,61 @@
                 currentUsers = snapshot.val() || {};
                 renderUsers();
             });
-
+            
             contactRef.on('value', snapshot => {
                 const messages = snapshot.val() || {};
-                renderContactMessages(messages);
+                Object.entries(messages || {}).forEach(([key, msg]) => {
+                    if (msg.isRead !== true) { 
+                        unreadMessageIds.add(key);
+                    } else {
+                        unreadMessageIds.delete(key);
+                    }
+                });
+                renderContactMessages(messages); 
+                updateContactMessagesBadge(); 
             });
             
             contactRef.on('child_added', snapshot => {
-                // Ignore initial data load if the tab is already active
-                if (document.getElementById('contactMessagesTab').classList.contains('hidden')) {
-                    unreadMessagesCount++;
+                const messageId = snapshot.key;
+                const messageData = snapshot.val();
+                if (messageData.isRead !== true) {
+                    unreadMessageIds.add(messageId);
+                    updateContactMessagesBadge(); 
+                }
+            });
+
+            contactRef.on('child_removed', snapshot => {
+                const messageId = snapshot.key;
+                if (unreadMessageIds.has(messageId)) {
+                    unreadMessageIds.delete(messageId);
                     updateContactMessagesBadge();
+                }
+            });
+
+            // Listener შეტყობინებების წაკითხულად მონიშვნის ღილაკზე
+            contactMessagesList.addEventListener("click", async (e) => {
+                const target = e.target.closest(".mark-read-btn");
+                if (!target) return;
+
+                const messageId = target.dataset.id;
+                const isRead = target.textContent === 'წაკითხულია'; // ამოწმებს ღილაკის ტექსტს
+
+                // თუ უკვე წაკითხულია, არაფერი გავაკეთოთ
+                if (isRead) return;
+
+                try {
+                    await contactRef.child(messageId).update({ isRead: true });
+                    // ლოკალურად (UI-ზე) განახლება
+                    unreadMessageIds.delete(messageId); // ამოვიღოთ წაუკითხავების სეტიდან
+                    updateContactMessagesBadge(); // განვაახლოთ ბეიჯი
+                    // ხელახლა გამოვიძახოთ renderContactMessages, რომ UI განახლდეს (სტილი და ღილაკი)
+                    const currentMessages = await contactRef.once('value').then(snap => snap.val() || {});
+                    renderContactMessages(currentMessages);
+                    showToast("შეტყობინება მონიშნულია წაკითხულად.");
+
+                } catch (error) {
+                    console.error("შეტყობინების წაკითხულად მონიშვნის შეცდომა:", error);
+                    showToast("შეტყობინების წაკითხულად მონიშვნა ვერ მოხერხდა.");
                 }
             });
 
@@ -720,4 +803,3 @@
     </script>
 </body>
 </html>
-
